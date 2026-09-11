@@ -34,6 +34,13 @@ export SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
 - **Onboarding survey**: optional, skippable, stores interests and free-text
   answers. No personality scoring — just self-described signals, per the
   brief.
+- **Legal pages**: Community Guidelines, Privacy Policy, Terms of Service,
+  and a working Contact form, all linked from the footer and the
+  registration page. The privacy policy is deliberately honest about the
+  one place the app doesn't yet match the brief: it says plainly that
+  private messages aren't end-to-end encrypted yet, rather than claiming
+  otherwise. These are a solid starting draft, not a substitute for review
+  by an actual lawyer before launch (said outright on the terms page too).
 - **File uploads**: avatars and post images, both genuinely validated —
   every upload is opened and decoded with Pillow (not trusted off its
   filename or declared Content-Type), resized (512px avatars, 1600px post

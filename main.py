@@ -23,6 +23,37 @@ def about():
     return render_template("about.html")
 
 
+@bp.route("/guidelines")
+def guidelines():
+    return render_template("guidelines.html")
+
+
+@bp.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+
+@bp.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+
+@bp.route("/contact", methods=["GET", "POST"])
+def contact():
+    sent = False
+    if request.method == "POST":
+        # In production this creates a support ticket or sends an email to
+        # the safety/support team. Logged here only because there's no
+        # ticketing backend configured in this environment.
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        message = request.form.get("message", "").strip()
+        if name and email and message:
+            current_app.logger.info("Contact form submission from %s <%s>: %s", name, email, message)
+            sent = True
+    return render_template("contact.html", sent=sent, csrf_token=get_csrf_token())
+
+
 # ---------------------------------------------------------------------------
 # Onboarding survey — optional, skippable, editable later (see settings)
 # ---------------------------------------------------------------------------

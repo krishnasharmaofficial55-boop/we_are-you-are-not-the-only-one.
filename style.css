@@ -499,6 +499,50 @@ p { margin: 0; }
 }
 .composer-attach:hover { color: var(--text); }
 
+/* ==========================================================================
+   Legal pages
+   ========================================================================== */
+
+.legal-page { max-width: 720px; }
+
+.legal-intro {
+  margin-top: 16px;
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+}
+
+.legal-page h2 {
+  font-size: 1.15rem;
+  margin-top: 36px;
+  margin-bottom: 10px;
+}
+
+.legal-page p {
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.65;
+  margin-bottom: 10px;
+}
+
+.legal-page ul {
+  margin: 0 0 10px;
+  padding-left: 22px;
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.legal-page a { color: var(--accent-violet); font-weight: 600; }
+
+.legal-disclaimer {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
 .composer {
   width: 100%;
   min-height: 64px;
