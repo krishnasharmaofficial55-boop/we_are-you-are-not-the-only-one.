@@ -12,6 +12,9 @@
   <a href="{{ url_for('posts.view', post_id=post.id) }}" style="display:block;">
     {% if post.body %}<div class="post-body">{{ post.body }}</div>{% endif %}
     {% if post.link_url %}<div class="post-link">{{ post.link_url }}</div>{% endif %}
+    {% for m in post.media %}
+      <img src="{{ url_for('static', filename=m.url) }}" alt="" class="post-image">
+    {% endfor %}
   </a>
 
   <div class="post-actions">

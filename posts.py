@@ -1,8 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, abort, flash
+from flask import Blueprint, render_template, request, redirect, url_for, abort, flash, current_app
+from pathlib import Path
 
 from .db import get_db
 from .security import current_user, login_required, csrf_protect, get_csrf_token
 from .social import is_blocked, _notify
+from .uploads import save_post_image, UploadError
 
 bp = Blueprint("posts", __name__)
 
@@ -43,6 +45,14 @@ def annotate_posts(db, posts, viewer_id):
     comment_counts = counts_by_post("comments")
     repost_counts = counts_by_post("reposts")
 
+    media_rows = db.execute(
+        f"SELECT post_id, url, media_type FROM post_media WHERE post_id IN ({placeholders}) ORDER BY position",
+        post_ids,
+    ).fetchall()
+    media_by_post = {}
+    for m in media_rows:
+        media_by_post.setdefault(m["post_id"], []).append({"url": m["url"], "type": m["media_type"]})
+
     def viewer_ids(table):
         rows = db.execute(
             f"SELECT post_id FROM {table} WHERE post_id IN ({placeholders}) AND user_id = ?",
@@ -60,6 +70,7 @@ def annotate_posts(db, posts, viewer_id):
         d["like_count"] = like_counts.get(p["id"], 0)
         d["comment_count"] = comment_counts.get(p["id"], 0)
         d["repost_count"] = repost_counts.get(p["id"], 0)
+        d["media"] = media_by_post.get(p["id"], [])
         d["viewer_liked"] = p["id"] in liked
         d["viewer_reposted"] = p["id"] in reposted
         d["viewer_saved"] = p["id"] in saved
@@ -79,18 +90,32 @@ def create():
     db = get_db()
     body = request.form.get("body", "").strip()
     link_url = request.form.get("link_url", "").strip() or None
+    image_file = request.files.get("image")
+    has_image = bool(image_file and image_file.filename)
 
-    if not body and not link_url:
-        flash("Write something or add a link before posting.", "error")
+    if not body and not link_url and not has_image:
+        flash("Write something, add a link, or attach an image before posting.", "error")
         return redirect(url_for("main.feed"))
     if len(body) > MAX_POST_LENGTH:
         flash(f"Posts are limited to {MAX_POST_LENGTH} characters.", "error")
         return redirect(url_for("main.feed"))
 
-    db.execute(
+    if has_image:
+        try:
+            image_url = save_post_image(image_file)
+        except UploadError as e:
+            flash(str(e), "error")
+            return redirect(url_for("main.feed"))
+
+    cur = db.execute(
         "INSERT INTO posts (user_id, body, link_url) VALUES (?, ?, ?)",
         (user["id"], body, link_url),
     )
+    if has_image:
+        db.execute(
+            "INSERT INTO post_media (post_id, media_type, url, position) VALUES (?, 'image', ?, 0)",
+            (cur.lastrowid, image_url),
+        )
     db.commit()
     return redirect(url_for("main.feed"))
 
@@ -103,8 +128,17 @@ def delete(post_id):
     post = _get_post_or_404(db, post_id)
     if post["user_id"] != user["id"]:
         abort(403)
+
+    media = db.execute("SELECT url FROM post_media WHERE post_id = ?", (post_id,)).fetchall()
     db.execute("DELETE FROM posts WHERE id = ?", (post_id,))
     db.commit()
+
+    for m in media:
+        try:
+            (Path(current_app.root_path) / "static" / m["url"]).unlink(missing_ok=True)
+        except OSError:
+            pass  # best-effort cleanup; an orphaned file is a disk-hygiene issue, not a data-integrity one
+
     return redirect(request.referrer or url_for("main.feed"))
 
 

@@ -34,6 +34,13 @@ export SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
 - **Onboarding survey**: optional, skippable, stores interests and free-text
   answers. No personality scoring — just self-described signals, per the
   brief.
+- **File uploads**: avatars and post images, both genuinely validated —
+  every upload is opened and decoded with Pillow (not trusted off its
+  filename or declared Content-Type), resized (512px avatars, 1600px post
+  images), and re-encoded on save, which strips EXIF/GPS metadata and any
+  non-image bytes. Filenames are always server-generated (uuid4), never
+  the client's. A `/settings` page ties this together with the profile
+  bio/identity fields, which previously had no edit UI at all.
 - **Notifications**: a real inbox at `/notifications` covering connection
   requests, accepted connections, likes, comments, reposts, and messages —
   each one links to the right place (the post, the connections page, the
@@ -127,9 +134,14 @@ milestones, roughly in the order they unlock each other:
    you've already registered. Not yet built: appeals workflow (reports
    table supports it structurally, but there's no appeal-submission UI)
    and announcements management.
-6. **File uploads** — avatar/media storage (S3-compatible), image
-   processing, size/type validation (config ceilings are already set in
-   `app/config.py`).
+6. ~~**File uploads**~~ — done: avatars and post images, validated with
+   Pillow (not trusted off filename/Content-Type), resized, re-encoded to
+   strip metadata, server-generated filenames (see `app/uploads.py`,
+   `app/settings.py`). Stored on local disk under `app/static/uploads/` —
+   swap for S3-compatible object storage before production (multiple app
+   servers can't share a local disk, and local disk isn't durable). Poll
+   voting still isn't built (`posts.is_poll` exists in the schema but
+   nothing reads or writes it yet).
 7. ~~**Notifications**~~ — done: real inbox, unread badge, links resolve
    per notification kind (see `app/notifications.py`). Not yet built: push
    notifications and grouping ("3 people liked your post" instead of 3

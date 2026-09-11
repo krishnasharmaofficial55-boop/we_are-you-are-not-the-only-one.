@@ -18,7 +18,7 @@ def create_app(config_object=Config):
 
     init_db(app)
 
-    from . import auth, main, social, messaging, posts, admin, notifications
+    from . import auth, main, social, messaging, posts, admin, notifications, settings
     app.register_blueprint(auth.bp)
     app.register_blueprint(main.bp)
     app.register_blueprint(social.bp)
@@ -26,6 +26,7 @@ def create_app(config_object=Config):
     app.register_blueprint(posts.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(notifications.bp)
+    app.register_blueprint(settings.bp)
 
     @app.context_processor
     def inject_globals():
